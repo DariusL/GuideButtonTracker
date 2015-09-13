@@ -1,9 +1,3 @@
-/*
-* GuideButtonPoller.cpp
-*
-*  Created on: Nov 12, 2012
-*      Author: James
-*/
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <iostream>
