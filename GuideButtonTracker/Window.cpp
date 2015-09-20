@@ -1,6 +1,11 @@
 #include "Window.h"
 
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#pragma comment(lib, "Comctl32.lib")
+#pragma comment(lib, "Rpcrt4.lib")
+
 Window *Window::instance;
+const UINT Window::MESSAGE = WM_APP + 1;
 
 Window::Window(std::wstring appName)
 :appName(appName), quit(false)
@@ -30,6 +35,28 @@ Window::Window(std::wstring appName)
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
 		0, 0, 0, 0, NULL, NULL, hInstance, NULL);
 
+	GUID guid;
+	Assert(UuidFromString((RPC_WSTR)L"A15F7BA5-BCC3-4140-9B2A-AAE31BD53A4A", &guid) == RPC_S_OK);
+
+
+
+	nid = {};
+	nid.uVersion = NOTIFYICON_VERSION_4;
+	nid.cbSize = sizeof(nid);
+	nid.hWnd = windowHandle;
+	nid.uFlags = NIF_ICON | NIF_TIP | NIF_GUID | NIF_SHOWTIP | NIF_MESSAGE;
+	nid.uID = 1;
+	nid.uCallbackMessage = MESSAGE;
+
+	nid.guidItem = guid;
+
+	StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), L"Test application");
+
+	Assert(LoadIconMetric(nullptr, IDI_APPLICATION, LIM_SMALL, &(nid.hIcon)) == S_OK);
+
+	Shell_NotifyIcon(NIM_ADD, &nid);
+	Shell_NotifyIcon(NIM_SETVERSION, &nid);
+
 	instance = this;
 }
 
@@ -56,6 +83,9 @@ LRESULT Window::OnMessage(HWND whandle, UINT message, WPARAM wParam, LPARAM lPar
 		break;
 	case WM_QUIT:
 		quit = true;
+		break;
+	case MESSAGE:
+		message++;
 		break;
 	default:
 		return DefWindowProc(whandle, message, wParam, lParam);
