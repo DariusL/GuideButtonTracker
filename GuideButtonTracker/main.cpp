@@ -8,6 +8,14 @@
 #include "xinput.h"
 #include "Window.h"
 
+void processMessage()
+{
+	MSG msg = {};
+	GetMessage(&msg, NULL, 0, 0);
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
+}
+
 int WINAPI WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPSTR lpCmdLine,
@@ -17,14 +25,15 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	XInput xinput(0);
 	XInput::ControllerStruct buttons;
 	HWND lHwnd = FindWindow(L"Shell_TrayWnd", nullptr);
-	while (!window.IsQuit()) //Infinite polling loop
+	while (!window.IsQuit())
 	{
-
 		xinput.getControllerState(buttons);  //call the function with the controller number(zero based) and
 		if (buttons.guideButton)
 		{
 			SendMessage(lHwnd, WM_COMMAND, 419, 0);
 		}
+
+		processMessage();
 		Sleep(30);
 	}
 

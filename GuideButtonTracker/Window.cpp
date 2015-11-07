@@ -5,7 +5,8 @@
 #pragma comment(lib, "Rpcrt4.lib")
 
 Window *Window::instance;
-const UINT Window::MESSAGE = WM_APP + 1;
+const UINT Window::MESSAGE_NOTIF = WM_USER + 1;
+const UINT Window::MESSAGE_QUIT = WM_USER + 2;
 
 Window::Window(std::wstring appName)
 :appName(appName), quit(false)
@@ -38,19 +39,16 @@ Window::Window(std::wstring appName)
 	GUID guid;
 	Assert(UuidFromString((RPC_WSTR)L"A15F7BA5-BCC3-4140-9B2A-AAE31BD53A4A", &guid) == RPC_S_OK);
 
-
-
 	nid = {};
 	nid.uVersion = NOTIFYICON_VERSION_4;
 	nid.cbSize = sizeof(nid);
 	nid.hWnd = windowHandle;
-	nid.uFlags = NIF_ICON | NIF_TIP | NIF_GUID | NIF_SHOWTIP | NIF_MESSAGE;
-	nid.uID = 1;
-	nid.uCallbackMessage = MESSAGE;
+	nid.uFlags = NIF_ICON | NIF_TIP | NIF_SHOWTIP | NIF_GUID | NIF_MESSAGE;
+	nid.uCallbackMessage = MESSAGE_NOTIF;
 
 	nid.guidItem = guid;
 
-	StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), L"Test application");
+	StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), L"GuideButtonTracker");
 
 	Assert(LoadIconMetric(nullptr, IDI_APPLICATION, LIM_SMALL, &(nid.hIcon)) == S_OK);
 
@@ -84,8 +82,23 @@ LRESULT Window::OnMessage(HWND whandle, UINT message, WPARAM wParam, LPARAM lPar
 	case WM_QUIT:
 		quit = true;
 		break;
-	case MESSAGE:
-		message++;
+	case MESSAGE_NOTIF:
+		if (LOWORD(lParam) == WM_CONTEXTMENU)
+		{
+			POINT pt = {};
+			if (GetCursorPos(&pt))
+			{
+				HMENU hPopupMenu = CreatePopupMenu();
+				AppendMenu(hPopupMenu, MF_STRING, MESSAGE_QUIT, L"Quit");
+				TrackPopupMenu(hPopupMenu, TPM_BOTTOMALIGN | TPM_RIGHTALIGN, pt.x, pt.y, 0, windowHandle, NULL);
+			}
+		}
+		break;
+	case WM_COMMAND:
+		if (LOWORD(wParam) == MESSAGE_QUIT)
+		{
+			quit = true;
+		}
 		break;
 	default:
 		return DefWindowProc(whandle, message, wParam, lParam);

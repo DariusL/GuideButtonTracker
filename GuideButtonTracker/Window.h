@@ -17,7 +17,8 @@
 using namespace std;
 class Window
 {
-	static const UINT MESSAGE;
+	static const UINT MESSAGE_NOTIF;
+	static const UINT MESSAGE_QUIT;
 	static Window *instance;
 	HWND windowHandle;
 	std::wstring appName;
