@@ -25,6 +25,7 @@ class Window
 	HINSTANCE hInstance;
 	bool quit;
 	NOTIFYICONDATA nid;
+	GUID notificationGuid;
 
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

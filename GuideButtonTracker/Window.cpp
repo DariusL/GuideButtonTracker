@@ -8,6 +8,13 @@ Window *Window::instance;
 const UINT Window::MESSAGE_NOTIF = WM_USER + 1;
 const UINT Window::MESSAGE_QUIT = WM_USER + 2;
 
+// Shell_NotifyIcon throws up with ERROR_NO_TOKEN if used with the same GUID for both versions
+#ifndef _DEBUG
+#define guid L"A15F7BA6-BCC3-4140-9B2A-AAE31BD53A4A"
+#else
+#define guid L"A15F7BA5-BCC3-4140-9B2A-AAE31BD53A4A"
+#endif
+
 Window::Window(std::wstring appName)
 :appName(appName), quit(false)
 {
@@ -36,30 +43,32 @@ Window::Window(std::wstring appName)
 		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
 		0, 0, 0, 0, NULL, NULL, hInstance, NULL);
 
-	GUID guid;
-	Assert(UuidFromString((RPC_WSTR)L"A15F7BA5-BCC3-4140-9B2A-AAE31BD53A4A", &guid) == RPC_S_OK);
+	Assert(UuidFromString((RPC_WSTR)guid, &notificationGuid) == RPC_S_OK);
 
 	nid = {};
 	nid.uVersion = NOTIFYICON_VERSION_4;
-	nid.cbSize = sizeof(nid);
+	nid.cbSize = sizeof(NOTIFYICONDATA);
 	nid.hWnd = windowHandle;
 	nid.uFlags = NIF_ICON | NIF_TIP | NIF_SHOWTIP | NIF_GUID | NIF_MESSAGE;
 	nid.uCallbackMessage = MESSAGE_NOTIF;
 
-	nid.guidItem = guid;
+	nid.guidItem = notificationGuid;
 
 	StringCchCopy(nid.szTip, ARRAYSIZE(nid.szTip), L"GuideButtonTracker");
 
 	Assert(LoadIconMetric(nullptr, IDI_APPLICATION, LIM_SMALL, &(nid.hIcon)) == S_OK);
-
-	Shell_NotifyIcon(NIM_ADD, &nid);
-	Shell_NotifyIcon(NIM_SETVERSION, &nid);
+	// removes icon left from previous runs
+	Shell_NotifyIcon(NIM_DELETE, &nid);
+	nid.hWnd = windowHandle;
+	Assert(Shell_NotifyIcon(NIM_ADD, &nid));
+	Assert(Shell_NotifyIcon(NIM_SETVERSION, &nid));
 
 	instance = this;
 }
 
 Window::~Window()
 {
+	Shell_NotifyIcon(NIM_DELETE, &nid);
 	DestroyWindow(windowHandle);
 	windowHandle = NULL;
 	UnregisterClass(appName.c_str(), hInstance);
